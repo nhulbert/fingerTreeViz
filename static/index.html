@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Shaders</title>
+    <style>
+        body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin: 0;
+          padding: 0;
+        }
+        #addbuttons {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+        }
+        #splitvals {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .controls {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        .canvas-container {
+          width: 80%;
+        }
+        svg {
+          border: 1px solid #ccc;
+          width: 100%;
+        }
+      }
+    </style>
+</head>
+<body>
+    <div id="addbuttons">
+        <button id="addtree" style="width: 150px; height: 150px; font-size: 20px;">Add fingertree</button>
+        <button id="concat" style="width: 150px; height: 150px; font-size: 20px;">Concatenate fingertrees</button>
+        <button id="clone" style="width: 150px; height: 150px; font-size: 20px;">Clone fingertrees</button>
+        <button id="split" style="width: 150px; height: 150px; font-size: 20px;">Split fingertrees</button>
+        <div id="splitvals" style="vertical-align: top;">
+            <input type="range" id="slider" min="1" max="100" step="1" value="10">
+            <input type="number" id="sliderValue" min="1" max="100" step="1" value="10">
+        </div>
+    </div>
+    <div id="buttons">
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script type="module" src="/static/fingertree.js"></script>
+</body>
+</html>
