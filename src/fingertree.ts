@@ -252,7 +252,7 @@ class FingerTree<T extends Measurable & Cloneable<any>> implements Measurable, C
             this.tail = other.tail;
             this.child = other.child;
             other.clear();
-            arr.forEach(el => this.addl(el));
+            arr.slice().reverse().forEach(el => this.addl(el));
         } else if (other.isEmpty()) {
             arr.forEach(el => this.addr(el));
         } else if (this.isSingle()) {
@@ -261,7 +261,7 @@ class FingerTree<T extends Measurable & Cloneable<any>> implements Measurable, C
             this.tail = other.tail;
             this.child = other.child;
             other.clear();
-            arr.forEach(el => this.addl(el));
+            arr.slice().reverse().forEach(el => this.addl(el));
             this.addl(firstEl);
         } else if (other.isSingle()) {
             arr.forEach(el => this.addr(el));
@@ -483,19 +483,21 @@ class VisualizedFingerTree<T extends Measurable & Cloneable<any>> extends Finger
     }
 
     deepConnectTreeNodes(): void {
-        this.connectTreeNodes();
         this.head.arr.forEach(el => {
             this.deepConnectDigitNodes(el);
         });
         this.tail.arr.forEach(el => {
             this.deepConnectDigitNodes(el);
         });
+        this.connectTreeNodes();
     }
 
     deepConnectDigitNodes(input: any): void {
         if (input instanceof Digit) {
             input.arr.forEach(el => {
                 connectNodes(getNode(input, false), getNode(el, false));
+            });
+            input.arr.forEach(el => {
                 this.deepConnectDigitNodes(el);
             });
         }
