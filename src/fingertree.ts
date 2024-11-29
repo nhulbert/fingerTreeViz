@@ -1,11 +1,12 @@
-const height = 500;
-const width = 1500;
-const heightMargin = 37;
 const nodeSize = 3;
-const offset = 500;
-const transitionDuration = 2000;
+const transitionDuration = 1000;
 const buttonWidth = 150;
 const buttonHeight = 25;
+
+// will be set based on screen size
+let height = 1;
+let width = 1;
+let offset = 1;
 
 interface TreeNode {
     id?: number;
@@ -616,19 +617,20 @@ class D3Tree {
 
         this.treeData = this.fingerTree.getRootTreeNode();
         this.root = d3.hierarchy(this.treeData);
-        this.treeLayout = d3.tree<TreeNode>().size([height, width]);
+        this.treeLayout = d3.tree<TreeNode>().size([width, height]);
 
         this.treeLayout(this.root);
         this.limits = this.setRelativeHeights(this.root, 0, true);
-        this.adjustPositions(this.root, index);
+        this.adjustPositions(this.root, index, d3.min(this.root.descendants(), d => d.x));
     }
 
     update(index: number): void {
         this.treeData = this.fingerTree.getRootTreeNode();
         this.root = d3.hierarchy(this.treeData);
+        this.treeLayout.size([width, height]);
         this.treeLayout(this.root);
         this.limits = this.setRelativeHeights(this.root, 0, true);
-        this.adjustPositions(this.root, index);
+        this.adjustPositions(this.root, index, d3.min(this.root.descendants(), d => d.x));
     }
 
     getDepth(node: d3.HierarchyNode<TreeNode>) : number {
@@ -657,11 +659,12 @@ class D3Tree {
         return out;
     }
 
-    adjustPositions(node: d3.HierarchyNode<TreeNode>, index: number): void {
+    adjustPositions(node: d3.HierarchyNode<TreeNode>, index: number, minX: number): void {
+        let heightMargin = 0.3*height;
         node.y = heightMargin + (node.data.relativeHeight - this.limits[0]) * (height - 2*heightMargin) / (this.limits[1] - this.limits[0]);
-        node.x += index * offset;
+        node.x += -minX + (0.5 + index) * offset;
         if (node.children) {
-            node.children.forEach(c => this.adjustPositions(c, index));
+            node.children.forEach(c => this.adjustPositions(c, index, minX));
         }
     }
 }
@@ -674,19 +677,23 @@ class D3View {
 
     constructor() {
         this.svg =
-            d3.select("body").append("svg")
-                .attr("width", width)
-                .attr("height", width);
+            d3.select("body").append("svg");
+        this.updateBounds();
         this.d3Trees = [];
 
-        document.getElementById('addtree').addEventListener('click', () => this.addTree());
+        document.getElementById('addtree').addEventListener('click', () => {
+            if (this.d3Trees.length < 4) {
+                this.addTree();
+            }
+        });
         document.getElementById('concat').addEventListener('click', () => {
             if (this.d3Trees.length >= 2) {
                 this.d3Trees[0].fingerTree.concat(this.d3Trees[1].fingerTree)
                 document.getElementById("buttons" + (this.d3Trees.length-1)).remove();
                 this.d3Trees.splice(1,1);
+                this.updateBounds();
+                this.updateAll();
             }
-            this.updateAll();
         });
         const slider: HTMLInputElement = document.getElementById('slider') as HTMLInputElement;
         const sliderValue = document.getElementById('sliderValue') as HTMLInputElement;
@@ -702,19 +709,23 @@ class D3View {
         );
         slider.addEventListener('input', () => { sliderValue.value = slider.value; });
         document.getElementById('clone').addEventListener('click', () => {
-            let other = this.d3Trees[0].fingerTree.clone();
-            let d3Tree = new D3Tree(1, other);
-            this.d3Trees.splice(1, 0, d3Tree);
-            this.addButtonSet(1);
-            this.updateAll();
+            if (this.d3Trees.length < 4) {
+                let other = this.d3Trees[0].fingerTree.clone();
+                let d3Tree = new D3Tree(1, other);
+                this.d3Trees.splice(1, 0, d3Tree);
+                this.addButtonSet(1);
+                this.updateBounds();
+                this.updateAll();
+            }
         });
         document.getElementById('split').addEventListener('click', () => {
             let splitVal = parseInt(slider.value);
-            if (splitVal > 0 && this.d3Trees[0].fingerTree.measure() > splitVal) {
+            if (this.d3Trees.length < 4 && splitVal > 0 && this.d3Trees[0].fingerTree.measure() > splitVal) {
                 let other = this.d3Trees[0].fingerTree.splitComplete(splitVal, 0);
                 let d3Tree = new D3Tree(1, other);
                 this.d3Trees.splice(1, 0, d3Tree);
                 this.addButtonSet(1);
+                this.updateBounds();
                 this.updateAll();
             }
         });
@@ -722,12 +733,20 @@ class D3View {
         this.addTree();
     }
 
+    updateBounds(): void {
+        let rect = document.querySelector('svg').getBoundingClientRect();
+        width = rect.width / 5.5;
+        height = rect.height;
+        offset = rect.width / 5;
+    }
+
     addTree(): void {
         let ind = this.d3Trees.length;
         let d3Tree = new D3Tree(ind);
         this.d3Trees.push(d3Tree);
         this.addButtonSet(ind);
-        this.update(ind);
+        this.updateBounds();
+        this.updateAll();
     }
 
     addButtonSet(start: number): void {
@@ -792,31 +811,39 @@ class D3View {
 
         const nodeEnter = nodes.enter().append('circle')
             .attr('r', nodeSize)
-            .attr('cx', d => d.x + 50)
-            .attr('cy', d => d.y + 50)
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y)
 
         const linkEnter = links.enter().append('line')
-            .attr('x1', d => d.source.x + 50)
-            .attr('y1', d => d.source.y + 50)
-            .attr('x2', d => d.target.x + 50)
-            .attr('y2', d => d.target.y + 50)
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y)
             .attr('stroke', 'black');
 
         nodes.transition()
             .duration(transitionDuration)
-            .attr('cx', d => d.x + 50)
-            .attr('cy', d => d.y + 50);
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y);
 
         links.transition()
             .duration(transitionDuration)
-            .attr('x1', d => d.source.x + 50)
-            .attr('y1', d => d.source.y + 50)
-            .attr('x2', d => d.target.x + 50)
-            .attr('y2', d => d.target.y + 50);
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
 
         nodes.exit().remove();
         links.exit().remove();
     }
 }
 
-let d3View: D3View = new D3View();
+document.addEventListener('DOMContentLoaded', (event) => {
+    console.log('DOM loaded');
+    let d3View: D3View = new D3View();
+    window.addEventListener('resize', () => {
+        d3View.updateBounds();
+        d3View.updateAll();
+    });
+});
+

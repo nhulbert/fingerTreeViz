@@ -5,12 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGL Shaders</title>
     <style>
+        html {
+          overflow: hidden;
+        }
         body {
           display: flex;
           flex-direction: column;
           align-items: center;
           margin: 0;
           padding: 0;
+          overflow: hidden;
+          height: 100vh;
         }
         #addbuttons {
           display: flex;
@@ -34,17 +39,18 @@
         svg {
           border: 1px solid #ccc;
           width: 100%;
+          flex-grow: 1;
         }
       }
     </style>
 </head>
 <body>
     <div id="addbuttons">
-        <button id="addtree" style="width: 150px; height: 150px; font-size: 20px;">Add fingertree</button>
-        <button id="concat" style="width: 150px; height: 150px; font-size: 20px;">Concatenate fingertrees</button>
-        <button id="clone" style="width: 150px; height: 150px; font-size: 20px;">Clone fingertrees</button>
-        <button id="split" style="width: 150px; height: 150px; font-size: 20px;">Split fingertrees</button>
-        <div id="splitvals" style="vertical-align: top;">
+        <button id="addtree" style="width: 20vw; height: 10vh; font-size: 20px;">New</button>
+        <button id="concat" style="width: 20vw; height: 10vh; font-size: 20px;">Concatenate</button>
+        <button id="clone" style="width: 20vw; height: 10vh; font-size: 20px;">Clone</button>
+        <button id="split" style="width: 20vw; height: 10vh; font-size: 20px;">Split</button>
+        <div id="splitvals" style="width: 20vw; vertical-align: top;">
             <input type="range" id="slider" min="1" max="100" step="1" value="10">
             <input type="number" id="sliderValue" min="1" max="100" step="1" value="10">
         </div>
